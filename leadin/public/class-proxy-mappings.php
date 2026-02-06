@@ -163,17 +163,38 @@ class Proxy_Mappings {
 
 			$target_url = ProxyUtils::get_proxy_base_url() . $proxy_path;
 
-			ProxyUtils::info_log( "Proxying request to: $target_url" );
-
 			$remote_addr = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
 
-			$args = array(
-				'headers' => array(
+			$original_headers = $this->get_request_headers();
+
+			$headers = array_merge(
+				$original_headers,
+				array(
 					'X-HS-Public-Host'              => ProxyUtils::get_destination_domain(),
 					'X-Forwarded-For'               => ( ! empty( ProxyUtils::get_client_ip() ) ? ProxyUtils::get_client_ip() . ', ' : '' ) . $remote_addr,
 					'X-HubSpot-Trust-Forwarded-For' => 'true',
+					// wp_remote_get blocks if the connection is left open
+					'Connection'                    => 'close'
 				),
 			);
+
+			// Host must be removed to let wp_remote_get set the correct host for the target URL.
+			// Content-Length must be removed as it refers to the original request size, not the proxied request.
+			unset( $headers['Host'] );
+			unset( $headers['Content-Length'] );
+
+			if ( isset( $headers['Cookie'] ) ) {
+				$headers['Cookie'] = $this->filter_wordpress_cookies( $headers['Cookie'] );
+				if ( empty( $headers['Cookie'] ) ) {
+					unset( $headers['Cookie'] );
+				}
+			}
+
+			$args = array(
+				'headers' => $headers,
+			);
+
+			ProxyUtils::info_log( "Proxying request to: $target_url" );
 
 			$response = wp_remote_get( $target_url, $args );
 
@@ -182,10 +203,28 @@ class Proxy_Mappings {
 				wp_die( 'Error retrieving content.' );
 			}
 
-			$body      = wp_remote_retrieve_body( $response );
-			$http_code = wp_remote_retrieve_response_code( $response );
+			$body             = wp_remote_retrieve_body( $response );
+			$http_code        = wp_remote_retrieve_response_code( $response );
+			$response_headers = wp_remote_retrieve_headers( $response );
+
+			$skip_headers = array(
+				'transfer-encoding',
+				'content-encoding',
+				'content-length',
+				'connection',
+				'keep-alive',
+			);
+
+			foreach ( $response_headers as $name => $value ) {
+				if ( in_array( strtolower( $name ), $skip_headers, true ) ) {
+					continue;
+				}
+				$safe_value = str_replace( array( "\r", "\n" ), '', $value );
+				header( "$name: $safe_value" );
+			}
 
 			status_header( $http_code );
+			header( 'X-HS-WP-Plugin-Proxy-URL: ' . $target_url );
 			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			echo $body;
 			exit;
@@ -224,6 +263,9 @@ class Proxy_Mappings {
 
 				$pattern = $this->get_wp_path_pattern( $wp_path );
 				if ( ! is_null( $pattern ) && preg_match( $pattern, rtrim( $request_uri, '/' ), $matches ) ) {
+					if ( isset( $mapping['id'] ) ) {
+						header( 'X-HS-WP-Plugin-Proxy-Mapping-ID: ' . $mapping['id'] );
+					}
 					return $this->get_new_hs_path( $hs_path, $matches, $request_uri );
 				}
 			}
@@ -286,7 +328,7 @@ class Proxy_Mappings {
 		if ( strpos( $hs_path, '*' ) !== false ) {
 			// If there's a captured value, use it; otherwise use an empty string.
 			$replacement = ( isset( $matches[1] ) && ! empty( $matches[1] ) )
-				? parse_url( $matches[1], PHP_URL_PATH )
+				? wp_parse_url( $matches[1], PHP_URL_PATH )
 				: '';
 
 			// Replace '*' with the captured value (or empty string).
@@ -331,5 +373,90 @@ class Proxy_Mappings {
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Retrieves and sanitizes HTTP request headers for proxying.
+	 *
+	 * Uses getallheaders() when available, otherwise falls back to parsing
+	 * $_SERVER superglobal for HTTP_* entries. All header values are sanitized
+	 * using sanitize_text_field() to prevent injection attacks.
+	 *
+	 * @return array Associative array of sanitized header name => value pairs.
+	 */
+	private function get_request_headers() {
+		$headers = array();
+
+		if ( function_exists( 'getallheaders' ) ) {
+			$all_headers = getallheaders();
+			if ( is_array( $all_headers ) ) {
+				foreach ( $all_headers as $name => $value ) {
+					$headers[ $name ] = sanitize_text_field( $value );
+				}
+			}
+		} else {
+			$headers = $this->get_headers_from_server_superglobal();
+		}
+
+		return $headers;
+	}
+
+	private function get_headers_from_server_superglobal() {
+		$headers = array();
+
+		foreach ( $_SERVER as $key => $value ) {
+			if ( strpos( $key, 'HTTP_' ) === 0 ) {
+				$header_name             = $this->normalize_header_name( substr( $key, 5 ) );
+				$headers[ $header_name ] = sanitize_text_field( wp_unslash( $value ) );
+			}
+		}
+
+		return $headers;
+	}
+
+	private function normalize_header_name( $name ) {
+		return str_replace( ' ', '-', ucwords( strtolower( str_replace( '_', ' ', $name ) ) ) );
+	}
+
+	/**
+	 * Filters out WordPress authentication cookies from a cookie header string.
+	 *
+	 * Removes cookies with WordPress-specific prefixes (wordpress_, wp-settings-,
+	 * wp_woocommerce_) to prevent leaking authentication credentials to external
+	 * proxy target servers.
+	 *
+	 * @param string $cookie_header The raw Cookie header value.
+	 * @return string Filtered cookie header with WordPress cookies removed.
+	 */
+	private function filter_wordpress_cookies( $cookie_header ) {
+		$wp_cookie_prefixes = array(
+			'wordpress_',
+			'wp-settings-',
+			'wp_woocommerce_',
+		);
+
+		$cookies = explode( ';', $cookie_header );
+		$filtered_cookies = array();
+
+		foreach ( $cookies as $cookie ) {
+			$cookie = trim( $cookie );
+			if ( empty( $cookie ) ) {
+				continue;
+			}
+
+			$is_wp_cookie = false;
+			foreach ( $wp_cookie_prefixes as $prefix ) {
+				if ( strpos( $cookie, $prefix ) === 0 ) {
+					$is_wp_cookie = true;
+					break;
+				}
+			}
+
+			if ( ! $is_wp_cookie ) {
+				$filtered_cookies[] = $cookie;
+			}
+		}
+
+		return implode( '; ', $filtered_cookies );
 	}
 }
