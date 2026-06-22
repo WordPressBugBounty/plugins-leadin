@@ -6,7 +6,7 @@ Tags: CRM, Marketing, Live Chat, Forms, Analytics
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.2
-Stable tag: 11.3.45
+Stable tag: 11.3.51
 
 The CRM, Sales, and Marketing WordPress plugin to grow your business better.
 
@@ -395,8 +395,8 @@ Please visit the <a href="https://community.hubspot.com/?utm_source=wordpress-pl
 == Changelog ==
 
 <a href="http://plugins.svn.wordpress.org/leadin/trunk/changelog.txt" target="_blank">Full changelog here</a>
-- Current version: 11.3.45
-- Version release date: 2026-03-26
+- Current version: 11.3.51
+- Version release date: 2026-06-21
 
 = 11.3.44 (2026-03-18) =
 * Fixed a trailing comma error on PHP versions lower than 7.3
