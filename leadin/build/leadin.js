@@ -69,6 +69,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "disableInternalTracking": () => (/* binding */ disableInternalTracking),
 /* harmony export */   "fetchDisableInternalTracking": () => (/* binding */ fetchDisableInternalTracking),
 /* harmony export */   "fetchProxyMappingsEnabled": () => (/* binding */ fetchProxyMappingsEnabled),
+/* harmony export */   "fetchRefreshToken": () => (/* binding */ fetchRefreshToken),
 /* harmony export */   "getBusinessUnitId": () => (/* binding */ getBusinessUnitId),
 /* harmony export */   "healthcheckRestApi": () => (/* binding */ healthcheckRestApi),
 /* harmony export */   "refreshProxyMappingsCache": () => (/* binding */ refreshProxyMappingsCache),
@@ -161,6 +162,16 @@ function fetchProxyMappingsEnabled() {
 }
 function toggleProxyMappingsEnabled(value) {
   return makeRequest('put', '/wp-mappings-proxy-enabled', value);
+}
+var refreshTokenRequest = null;
+function fetchRefreshToken() {
+  if (!refreshTokenRequest) {
+    refreshTokenRequest = makeRequest('get', '/refresh-token')["catch"](function (err) {
+      refreshTokenRequest = null;
+      throw err;
+    });
+  }
+  return refreshTokenRequest;
 }
 
 /***/ }),
@@ -789,15 +800,17 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _lib_Raven__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../lib/Raven */ "./scripts/lib/Raven.ts");
 /* harmony import */ var _constants_leadinConfig__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../constants/leadinConfig */ "./scripts/constants/leadinConfig.ts");
-/* harmony import */ var _constants__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./constants */ "./scripts/iframe/constants.ts");
-/* harmony import */ var _messageMiddleware__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./messageMiddleware */ "./scripts/iframe/messageMiddleware.ts");
-/* harmony import */ var _utils_iframe__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../utils/iframe */ "./scripts/utils/iframe.ts");
+/* harmony import */ var _api_wordpressApiClient__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../api/wordpressApiClient */ "./scripts/api/wordpressApiClient.ts");
+/* harmony import */ var _constants__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./constants */ "./scripts/iframe/constants.ts");
+/* harmony import */ var _messageMiddleware__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./messageMiddleware */ "./scripts/iframe/messageMiddleware.ts");
+/* harmony import */ var _utils_iframe__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../utils/iframe */ "./scripts/utils/iframe.ts");
 function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+
 
 
 
@@ -857,19 +870,19 @@ var getAppOptions = function getAppOptions(app) {
     PluginAppOptions = _window.PluginAppOptions;
   var options;
   switch (app) {
-    case _constants__WEBPACK_IMPORTED_MODULE_3__.App.Plugin:
+    case _constants__WEBPACK_IMPORTED_MODULE_4__.App.Plugin:
       options = new PluginAppOptions();
       break;
-    case _constants__WEBPACK_IMPORTED_MODULE_3__.App.PluginSettings:
+    case _constants__WEBPACK_IMPORTED_MODULE_4__.App.PluginSettings:
       options = new PluginAppOptions().setPluginSettingsInit();
       break;
-    case _constants__WEBPACK_IMPORTED_MODULE_3__.App.Forms:
+    case _constants__WEBPACK_IMPORTED_MODULE_4__.App.Forms:
       options = new FormsAppOptions().setIntegratedAppConfig(getIntegrationConfig());
       if (createRoute) {
         options = options.setCreateFormAppInit();
       }
       break;
-    case _constants__WEBPACK_IMPORTED_MODULE_3__.App.LiveChat:
+    case _constants__WEBPACK_IMPORTED_MODULE_4__.App.LiveChat:
       options = new LiveChatAppOptions();
       if (createRoute) {
         options = options.setCreateLiveChatAppInit();
@@ -881,25 +894,37 @@ var getAppOptions = function getAppOptions(app) {
   return options;
 };
 function useAppEmbedder(app, createRoute, container) {
-  console.info('HubSpot plugin - starting app embedder for:', _constants__WEBPACK_IMPORTED_MODULE_3__.AppIframe[app], container);
-  var iframeNotRendered = (0,_utils_iframe__WEBPACK_IMPORTED_MODULE_5__.useIframeNotRendered)(_constants__WEBPACK_IMPORTED_MODULE_3__.AppIframe[app]);
+  console.info('HubSpot plugin - starting app embedder for:', _constants__WEBPACK_IMPORTED_MODULE_4__.AppIframe[app], container);
+  var iframeNotRendered = (0,_utils_iframe__WEBPACK_IMPORTED_MODULE_6__.useIframeNotRendered)(_constants__WEBPACK_IMPORTED_MODULE_4__.AppIframe[app]);
   (0,react__WEBPACK_IMPORTED_MODULE_0__.useEffect)(function () {
     var _window2 = window,
       IntegratedAppEmbedder = _window2.IntegratedAppEmbedder;
-    if (IntegratedAppEmbedder) {
-      var options = getAppOptions(app, createRoute).setLocale(_constants_leadinConfig__WEBPACK_IMPORTED_MODULE_2__.locale).setDeviceId(_constants_leadinConfig__WEBPACK_IMPORTED_MODULE_2__.deviceId).setRefreshToken(_constants_leadinConfig__WEBPACK_IMPORTED_MODULE_2__.refreshToken).setLeadinConfig(getLeadinConfig());
-      var embedder = new IntegratedAppEmbedder(_constants__WEBPACK_IMPORTED_MODULE_3__.AppIframe[app], _constants_leadinConfig__WEBPACK_IMPORTED_MODULE_2__.portalId, _constants_leadinConfig__WEBPACK_IMPORTED_MODULE_2__.hubspotBaseUrl, _utils_iframe__WEBPACK_IMPORTED_MODULE_5__.resizeWindow, _constants_leadinConfig__WEBPACK_IMPORTED_MODULE_2__.refreshToken ? '' : _constants_leadinConfig__WEBPACK_IMPORTED_MODULE_2__.impactLink).setOptions(options);
-      embedder.subscribe((0,_messageMiddleware__WEBPACK_IMPORTED_MODULE_4__.messageMiddleware)(embedder));
+    if (!IntegratedAppEmbedder) {
+      return;
+    }
+    var createEmbedder = function createEmbedder() {
+      var refreshToken = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
+      var options = getAppOptions(app, createRoute).setLocale(_constants_leadinConfig__WEBPACK_IMPORTED_MODULE_2__.locale).setDeviceId(_constants_leadinConfig__WEBPACK_IMPORTED_MODULE_2__.deviceId).setRefreshToken(refreshToken).setLeadinConfig(getLeadinConfig());
+      var embedder = new IntegratedAppEmbedder(_constants__WEBPACK_IMPORTED_MODULE_4__.AppIframe[app], _constants_leadinConfig__WEBPACK_IMPORTED_MODULE_2__.portalId, _constants_leadinConfig__WEBPACK_IMPORTED_MODULE_2__.hubspotBaseUrl, _utils_iframe__WEBPACK_IMPORTED_MODULE_6__.resizeWindow, refreshToken ? '' : _constants_leadinConfig__WEBPACK_IMPORTED_MODULE_2__.impactLink).setOptions(options);
+      embedder.subscribe((0,_messageMiddleware__WEBPACK_IMPORTED_MODULE_5__.messageMiddleware)(embedder));
       embedder.attachTo(container, true);
       embedder.postStartAppMessage(); // lets the app know all all data has been passed to it
       window.embedder = embedder;
+    };
+    if (_constants_leadinConfig__WEBPACK_IMPORTED_MODULE_2__.connectionStatus === 'Connected') {
+      (0,_api_wordpressApiClient__WEBPACK_IMPORTED_MODULE_3__.fetchRefreshToken)().then(function (_ref) {
+        var refreshToken = _ref.refreshToken;
+        createEmbedder(refreshToken);
+      })["catch"](function () {});
+    } else {
+      createEmbedder();
     }
   }, []);
   if (iframeNotRendered) {
     console.error('HubSpot plugin Iframe not rendered', {
       portalId: _constants_leadinConfig__WEBPACK_IMPORTED_MODULE_2__.portalId,
       container: container,
-      appName: _constants__WEBPACK_IMPORTED_MODULE_3__.AppIframe[app],
+      appName: _constants__WEBPACK_IMPORTED_MODULE_4__.AppIframe[app],
       hasIntegratedAppEmbedder: !!window.IntegratedAppEmbedder
     });
     _lib_Raven__WEBPACK_IMPORTED_MODULE_1__["default"].captureException(new Error('Leadin Iframe not rendered'), {
@@ -910,8 +935,8 @@ function useAppEmbedder(app, createRoute, container) {
         app: app,
         hubspotBaseUrl: _constants_leadinConfig__WEBPACK_IMPORTED_MODULE_2__.hubspotBaseUrl,
         impactLink: _constants_leadinConfig__WEBPACK_IMPORTED_MODULE_2__.impactLink,
-        appName: _constants__WEBPACK_IMPORTED_MODULE_3__.AppIframe[app],
-        hasRefreshToken: !!_constants_leadinConfig__WEBPACK_IMPORTED_MODULE_2__.refreshToken
+        appName: _constants__WEBPACK_IMPORTED_MODULE_4__.AppIframe[app],
+        isConnected: _constants_leadinConfig__WEBPACK_IMPORTED_MODULE_2__.connectionStatus === 'Connected'
       }
     });
   }

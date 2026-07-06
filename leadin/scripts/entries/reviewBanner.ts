@@ -4,7 +4,8 @@ import {
   initBackgroundApp,
 } from '../utils/backgroundAppUtils';
 import { domElements } from '../constants/selectors';
-import { refreshToken, activationTime } from '../constants/leadinConfig';
+import { connectionStatus, activationTime } from '../constants/leadinConfig';
+import { fetchRefreshToken } from '../api/wordpressApiClient';
 import { ProxyMessages } from '../iframe/integratedMessages';
 
 const REVIEW_BANNER_INTRO_PERIOD_DAYS = 15;
@@ -24,7 +25,9 @@ const userIsAfterIntroductoryPeriod = () => {
  * displayed to monitor events
  */
 export function initMonitorReviewBanner() {
-  if (refreshToken) {
+  if (connectionStatus !== 'Connected') return;
+
+  fetchRefreshToken().then(({ refreshToken }: { refreshToken: string }) => {
     const embedder = getOrCreateBackgroundApp(refreshToken);
     const container = $(domElements.reviewBannerContainer);
     if (container && userIsAfterIntroductoryPeriod()) {
@@ -58,7 +61,7 @@ export function initMonitorReviewBanner() {
           }
         });
     }
-  }
+  });
 }
 
 initBackgroundApp(initMonitorReviewBanner);

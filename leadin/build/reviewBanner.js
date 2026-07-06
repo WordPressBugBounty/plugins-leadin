@@ -1,6 +1,125 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
+/***/ "./scripts/api/wordpressApiClient.ts":
+/*!*******************************************!*\
+  !*** ./scripts/api/wordpressApiClient.ts ***!
+  \*******************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "disableInternalTracking": () => (/* binding */ disableInternalTracking),
+/* harmony export */   "fetchDisableInternalTracking": () => (/* binding */ fetchDisableInternalTracking),
+/* harmony export */   "fetchProxyMappingsEnabled": () => (/* binding */ fetchProxyMappingsEnabled),
+/* harmony export */   "fetchRefreshToken": () => (/* binding */ fetchRefreshToken),
+/* harmony export */   "getBusinessUnitId": () => (/* binding */ getBusinessUnitId),
+/* harmony export */   "healthcheckRestApi": () => (/* binding */ healthcheckRestApi),
+/* harmony export */   "refreshProxyMappingsCache": () => (/* binding */ refreshProxyMappingsCache),
+/* harmony export */   "setBusinessUnitId": () => (/* binding */ setBusinessUnitId),
+/* harmony export */   "skipReview": () => (/* binding */ skipReview),
+/* harmony export */   "toggleProxyMappingsEnabled": () => (/* binding */ toggleProxyMappingsEnabled),
+/* harmony export */   "trackConsent": () => (/* binding */ trackConsent),
+/* harmony export */   "updateHublet": () => (/* binding */ updateHublet)
+/* harmony export */ });
+/* harmony import */ var jquery__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! jquery */ "jquery");
+/* harmony import */ var jquery__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(jquery__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _lib_Raven__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../lib/Raven */ "./scripts/lib/Raven.ts");
+/* harmony import */ var _constants_leadinConfig__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../constants/leadinConfig */ "./scripts/constants/leadinConfig.ts");
+/* harmony import */ var _utils_queryParams__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../utils/queryParams */ "./scripts/utils/queryParams.ts");
+
+
+
+
+function makeRequest(method, path) {
+  var data = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+  var queryParams = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
+  // eslint-disable-next-line compat/compat
+  var restApiUrl = new URL("".concat(_constants_leadinConfig__WEBPACK_IMPORTED_MODULE_2__.restUrl, "leadin/v1").concat(path));
+  (0,_utils_queryParams__WEBPACK_IMPORTED_MODULE_3__.addQueryObjectToUrl)(restApiUrl, queryParams);
+  return new Promise(function (resolve, reject) {
+    var payload = {
+      url: restApiUrl.toString(),
+      method: method,
+      contentType: 'application/json',
+      beforeSend: function beforeSend(xhr) {
+        return xhr.setRequestHeader('X-WP-Nonce', _constants_leadinConfig__WEBPACK_IMPORTED_MODULE_2__.restNonce);
+      },
+      success: resolve,
+      error: function error(response) {
+        _lib_Raven__WEBPACK_IMPORTED_MODULE_1__["default"].captureMessage("HTTP Request to ".concat(restApiUrl, " failed with error ").concat(response.status, ": ").concat(response.responseText), {
+          fingerprint: ['{{ default }}', path, response.status, response.responseText]
+        });
+        reject(response);
+      }
+    };
+    if (method !== 'get') {
+      payload.data = JSON.stringify(data);
+    }
+    jquery__WEBPACK_IMPORTED_MODULE_0___default().ajax(payload);
+  });
+}
+function healthcheckRestApi() {
+  return makeRequest('get', '/healthcheck');
+}
+function disableInternalTracking(value) {
+  return makeRequest('put', '/internal-tracking', value ? '1' : '0');
+}
+function fetchDisableInternalTracking() {
+  return makeRequest('get', '/internal-tracking').then(function (message) {
+    return {
+      message: message
+    };
+  });
+}
+function updateHublet(hublet) {
+  return makeRequest('put', '/hublet', {
+    hublet: hublet
+  });
+}
+function skipReview() {
+  return makeRequest('post', '/skip-review');
+}
+function trackConsent(canTrack) {
+  return makeRequest('post', '/track-consent', {
+    canTrack: canTrack
+  }).then(function (message) {
+    return {
+      message: message
+    };
+  });
+}
+function setBusinessUnitId(businessUnitId) {
+  return makeRequest('put', '/business-unit', {
+    businessUnitId: businessUnitId
+  });
+}
+function getBusinessUnitId() {
+  return makeRequest('get', '/business-unit');
+}
+function refreshProxyMappingsCache() {
+  return makeRequest('post', '/wp-mappings-cache-reset');
+}
+function fetchProxyMappingsEnabled() {
+  return makeRequest('get', '/wp-mappings-proxy-enabled');
+}
+function toggleProxyMappingsEnabled(value) {
+  return makeRequest('put', '/wp-mappings-proxy-enabled', value);
+}
+var refreshTokenRequest = null;
+function fetchRefreshToken() {
+  if (!refreshTokenRequest) {
+    refreshTokenRequest = makeRequest('get', '/refresh-token')["catch"](function (err) {
+      refreshTokenRequest = null;
+      throw err;
+    });
+  }
+  return refreshTokenRequest;
+}
+
+/***/ }),
+
 /***/ "./scripts/constants/leadinConfig.ts":
 /*!*******************************************!*\
   !*** ./scripts/constants/leadinConfig.ts ***!
@@ -418,6 +537,31 @@ var getOrCreateBackgroundApp = function getOrCreateBackgroundApp() {
   window.LeadinBackgroundApp = embedder;
   return window.LeadinBackgroundApp;
 };
+
+/***/ }),
+
+/***/ "./scripts/utils/queryParams.ts":
+/*!**************************************!*\
+  !*** ./scripts/utils/queryParams.ts ***!
+  \**************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "addQueryObjectToUrl": () => (/* binding */ addQueryObjectToUrl),
+/* harmony export */   "removeQueryParamFromLocation": () => (/* binding */ removeQueryParamFromLocation)
+/* harmony export */ });
+function addQueryObjectToUrl(urlObject, queryParams) {
+  Object.keys(queryParams).forEach(function (key) {
+    urlObject.searchParams.append(key, queryParams[key]);
+  });
+}
+function removeQueryParamFromLocation(key) {
+  var location = new URL(window.location.href);
+  location.searchParams["delete"](key);
+  window.history.replaceState(null, '', location.href);
+}
 
 /***/ }),
 
@@ -3684,7 +3828,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _utils_backgroundAppUtils__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../utils/backgroundAppUtils */ "./scripts/utils/backgroundAppUtils.ts");
 /* harmony import */ var _constants_selectors__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../constants/selectors */ "./scripts/constants/selectors.ts");
 /* harmony import */ var _constants_leadinConfig__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../constants/leadinConfig */ "./scripts/constants/leadinConfig.ts");
-/* harmony import */ var _iframe_integratedMessages__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../iframe/integratedMessages */ "./scripts/iframe/integratedMessages/index.ts");
+/* harmony import */ var _api_wordpressApiClient__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../api/wordpressApiClient */ "./scripts/api/wordpressApiClient.ts");
+/* harmony import */ var _iframe_integratedMessages__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../iframe/integratedMessages */ "./scripts/iframe/integratedMessages/index.ts");
+
 
 
 
@@ -3702,34 +3848,36 @@ var userIsAfterIntroductoryPeriod = function userIsAfterIntroductoryPeriod() {
  * displayed to monitor events
  */
 function initMonitorReviewBanner() {
-  if (_constants_leadinConfig__WEBPACK_IMPORTED_MODULE_3__.refreshToken) {
-    var embedder = (0,_utils_backgroundAppUtils__WEBPACK_IMPORTED_MODULE_1__.getOrCreateBackgroundApp)(_constants_leadinConfig__WEBPACK_IMPORTED_MODULE_3__.refreshToken);
+  if (_constants_leadinConfig__WEBPACK_IMPORTED_MODULE_3__.connectionStatus !== 'Connected') return;
+  (0,_api_wordpressApiClient__WEBPACK_IMPORTED_MODULE_4__.fetchRefreshToken)().then(function (_ref) {
+    var refreshToken = _ref.refreshToken;
+    var embedder = (0,_utils_backgroundAppUtils__WEBPACK_IMPORTED_MODULE_1__.getOrCreateBackgroundApp)(refreshToken);
     var container = jquery__WEBPACK_IMPORTED_MODULE_0___default()(_constants_selectors__WEBPACK_IMPORTED_MODULE_2__.domElements.reviewBannerContainer);
     if (container && userIsAfterIntroductoryPeriod()) {
       jquery__WEBPACK_IMPORTED_MODULE_0___default()(_constants_selectors__WEBPACK_IMPORTED_MODULE_2__.domElements.reviewBannerLeaveReviewLink).off('click').on('click', function () {
         embedder.postMessage({
-          key: _iframe_integratedMessages__WEBPACK_IMPORTED_MODULE_4__.ProxyMessages.TrackReviewBannerInteraction
+          key: _iframe_integratedMessages__WEBPACK_IMPORTED_MODULE_5__.ProxyMessages.TrackReviewBannerInteraction
         });
       });
       jquery__WEBPACK_IMPORTED_MODULE_0___default()(_constants_selectors__WEBPACK_IMPORTED_MODULE_2__.domElements.reviewBannerDismissButton).off('click').on('click', function () {
         embedder.postMessage({
-          key: _iframe_integratedMessages__WEBPACK_IMPORTED_MODULE_4__.ProxyMessages.TrackReviewBannerDismissed
+          key: _iframe_integratedMessages__WEBPACK_IMPORTED_MODULE_5__.ProxyMessages.TrackReviewBannerDismissed
         });
       });
       embedder.postAsyncMessage({
-        key: _iframe_integratedMessages__WEBPACK_IMPORTED_MODULE_4__.ProxyMessages.FetchContactsCreateSinceActivation,
+        key: _iframe_integratedMessages__WEBPACK_IMPORTED_MODULE_5__.ProxyMessages.FetchContactsCreateSinceActivation,
         payload: +_constants_leadinConfig__WEBPACK_IMPORTED_MODULE_3__.activationTime * 1000
-      }).then(function (_ref) {
-        var total = _ref.total;
+      }).then(function (_ref2) {
+        var total = _ref2.total;
         if (total >= 5) {
           container.removeClass('leadin-review-banner--hide');
           embedder.postMessage({
-            key: _iframe_integratedMessages__WEBPACK_IMPORTED_MODULE_4__.ProxyMessages.TrackReviewBannerRender
+            key: _iframe_integratedMessages__WEBPACK_IMPORTED_MODULE_5__.ProxyMessages.TrackReviewBannerRender
           });
         }
       });
     }
-  }
+  });
 }
 (0,_utils_backgroundAppUtils__WEBPACK_IMPORTED_MODULE_1__.initBackgroundApp)(initMonitorReviewBanner);
 })();

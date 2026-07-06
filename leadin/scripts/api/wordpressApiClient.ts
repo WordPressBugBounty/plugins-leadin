@@ -92,3 +92,15 @@ export function fetchProxyMappingsEnabled() {
 export function toggleProxyMappingsEnabled(value: boolean) {
   return makeRequest('put', '/wp-mappings-proxy-enabled', value);
 }
+
+let refreshTokenRequest: Promise<any> | null = null;
+
+export function fetchRefreshToken() {
+  if (!refreshTokenRequest) {
+    refreshTokenRequest = makeRequest('get', '/refresh-token').catch(err => {
+      refreshTokenRequest = null;
+      throw err;
+    });
+  }
+  return refreshTokenRequest;
+}

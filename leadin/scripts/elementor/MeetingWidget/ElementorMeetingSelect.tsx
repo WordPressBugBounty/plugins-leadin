@@ -11,9 +11,7 @@ import {
   BackgroudAppContext,
   useBackgroundAppContext,
 } from '../../iframe/useBackgroundApp';
-import { refreshToken } from '../../constants/leadinConfig';
-import { getOrCreateBackgroundApp } from '../../utils/backgroundAppUtils';
-import { isRefreshTokenAvailable } from '../../utils/isRefreshTokenAvailable';
+import { useGetEmbedder } from '../../utils/useGetEmbedder';
 
 interface IElementorMeetingSelectProps {
   url: string;
@@ -113,12 +111,10 @@ function ElementorMeetingSelectWrapper(props: IElementorMeetingSelectProps) {
 export default function ElementorMeetingsSelectContainer(
   props: IElementorMeetingSelectProps
 ) {
+  const embedder = useGetEmbedder();
+
   return (
-    <BackgroudAppContext.Provider
-      value={
-        isRefreshTokenAvailable() && getOrCreateBackgroundApp(refreshToken)
-      }
-    >
+    <BackgroudAppContext.Provider value={embedder}>
       <ElementorMeetingSelectWrapper {...props} />
     </BackgroudAppContext.Provider>
   );

@@ -1,5 +1,5 @@
 import React, { Fragment, useEffect } from 'react';
-import { portalId, refreshToken } from '../../constants/leadinConfig';
+import { portalId } from '../../constants/leadinConfig';
 import UISpacer from '../UIComponents/UISpacer';
 import PreviewForm from './PreviewForm';
 import FormSelect from './FormSelect';
@@ -11,8 +11,7 @@ import {
 } from '../../iframe/useBackgroundApp';
 import { ProxyMessages } from '../../iframe/integratedMessages';
 import LoadingBlock from '../Common/LoadingBlock';
-import { getOrCreateBackgroundApp } from '../../utils/backgroundAppUtils';
-import { isRefreshTokenAvailable } from '../../utils/isRefreshTokenAvailable';
+import { useGetEmbedder } from '../../utils/useGetEmbedder';
 
 interface IFormEditProps extends IFormBlockProps {
   preview: boolean;
@@ -87,12 +86,14 @@ function FormEdit({
 }
 
 export default function FormEditContainer(props: IFormEditProps) {
+  const embedder = useGetEmbedder();
+
+  if (embedder === null) {
+    return <LoadingBlock />;
+  }
+
   return (
-    <BackgroudAppContext.Provider
-      value={
-        isRefreshTokenAvailable() && getOrCreateBackgroundApp(refreshToken)
-      }
-    >
+    <BackgroudAppContext.Provider value={embedder}>
       <FormEdit {...props} />
     </BackgroudAppContext.Provider>
   );

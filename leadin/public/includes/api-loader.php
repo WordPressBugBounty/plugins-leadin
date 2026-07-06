@@ -4,6 +4,7 @@ namespace Leadin;
 
 use Leadin\admin\api\WP_Mappings_Api_Controller;
 use Leadin\api\Healthcheck_Api_Controller;
+use Leadin\api\Refresh_Token_Api_Controller;
 
 use Leadin\admin\api\Internal_Tracking_Api_Controller;
 use Leadin\admin\api\Hublet_Api_Controller;
@@ -20,6 +21,7 @@ add_action(
  */
 function leadin_register_routes() {
 	new Healthcheck_Api_Controller();
+	new Refresh_Token_Api_Controller();
 	// Admin routes.
 	new Internal_Tracking_Api_Controller();
 	new Hublet_Api_Controller();

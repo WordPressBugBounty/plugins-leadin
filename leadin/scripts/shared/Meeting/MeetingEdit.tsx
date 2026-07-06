@@ -7,11 +7,9 @@ import {
   useBackgroundAppContext,
   usePostBackgroundMessage,
 } from '../../iframe/useBackgroundApp';
-import { refreshToken } from '../../constants/leadinConfig';
 import { ProxyMessages } from '../../iframe/integratedMessages';
 import LoadingBlock from '../Common/LoadingBlock';
-import { getOrCreateBackgroundApp } from '../../utils/backgroundAppUtils';
-import { isRefreshTokenAvailable } from '../../utils/isRefreshTokenAvailable';
+import { useGetEmbedder } from '../../utils/useGetEmbedder';
 
 interface IMeetingEditProps extends IMeetingBlockProps {
   preview?: boolean;
@@ -60,12 +58,14 @@ function MeetingEdit({
 }
 
 export default function MeetingsEditContainer(props: IMeetingEditProps) {
+  const embedder = useGetEmbedder();
+
+  if (embedder === null) {
+    return <LoadingBlock />;
+  }
+
   return (
-    <BackgroudAppContext.Provider
-      value={
-        isRefreshTokenAvailable() && getOrCreateBackgroundApp(refreshToken)
-      }
-    >
+    <BackgroudAppContext.Provider value={embedder}>
       <MeetingEdit {...props} />
     </BackgroudAppContext.Provider>
   );

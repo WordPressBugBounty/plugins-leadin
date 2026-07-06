@@ -14,7 +14,6 @@ import {
   portalEmail,
   portalId,
   reviewSkippedDate,
-  refreshToken,
   impactLink,
   theme,
   lastAuthorizeTime,
@@ -28,6 +27,7 @@ import {
   decryptError,
   LeadinConfig,
 } from '../constants/leadinConfig';
+import { fetchRefreshToken } from '../api/wordpressApiClient';
 import { App, AppIframe } from './constants';
 import { messageMiddleware } from './messageMiddleware';
 import { resizeWindow, useIframeNotRendered } from '../utils/iframe';
@@ -184,7 +184,11 @@ export default function useAppEmbedder(
   useEffect(() => {
     const { IntegratedAppEmbedder }: any = window;
 
-    if (IntegratedAppEmbedder) {
+    if (!IntegratedAppEmbedder) {
+      return;
+    }
+
+    const createEmbedder = (refreshToken = '') => {
       const options = getAppOptions(app, createRoute)
         .setLocale(locale)
         .setDeviceId(deviceId)
@@ -204,6 +208,16 @@ export default function useAppEmbedder(
       embedder.postStartAppMessage(); // lets the app know all all data has been passed to it
 
       (window as any).embedder = embedder;
+    };
+
+    if (connectionStatus === 'Connected') {
+      fetchRefreshToken()
+        .then(({ refreshToken }: { refreshToken: string }) => {
+          createEmbedder(refreshToken);
+        })
+        .catch(() => {});
+    } else {
+      createEmbedder();
     }
   }, []);
 
@@ -223,7 +237,7 @@ export default function useAppEmbedder(
         hubspotBaseUrl,
         impactLink,
         appName: AppIframe[app],
-        hasRefreshToken: !!refreshToken,
+        isConnected: connectionStatus === 'Connected',
       },
     });
   }

@@ -8,10 +8,8 @@ import SidebarSprocketIcon from '../Common/SidebarSprocketIcon';
 import styled from 'styled-components';
 import { __ } from '@wordpress/i18n';
 import { BackgroudAppContext } from '../../iframe/useBackgroundApp';
-import { refreshToken } from '../../constants/leadinConfig';
-import { getOrCreateBackgroundApp } from '../../utils/backgroundAppUtils';
 import { isFullSiteEditor } from '../../utils/withMetaData';
-import { isRefreshTokenAvailable } from '../../utils/isRefreshTokenAvailable';
+import { useGetEmbedder } from '../../utils/useGetEmbedder';
 
 export function registerHubspotSidebar() {
   const ContentTypeLabelStyle = styled.div`
@@ -28,8 +26,10 @@ export function registerHubspotSidebar() {
     </ContentTypeLabelStyle>
   );
 
-  const LeadinPluginSidebar = ({ postType }: { postType: string }) =>
-    postType && !isFullSiteEditor() ? (
+  const LeadinPluginSidebar = ({ postType }: { postType: string }) => {
+    const embedder = useGetEmbedder();
+
+    return postType && !isFullSiteEditor() ? (
       <PluginSidebar
         name="leadin"
         title="HubSpot"
@@ -41,12 +41,7 @@ export function registerHubspotSidebar() {
         }
       >
         <PanelBody title={__('HubSpot Analytics', 'leadin')} initialOpen={true}>
-          <BackgroudAppContext.Provider
-            value={
-              isRefreshTokenAvailable() &&
-              getOrCreateBackgroundApp(refreshToken)
-            }
-          >
+          <BackgroudAppContext.Provider value={embedder}>
             <UISidebarSelectControl
               metaKey="content-type"
               className="select-content-type"
@@ -70,6 +65,7 @@ export function registerHubspotSidebar() {
         </PanelBody>
       </PluginSidebar>
     ) : null;
+  };
   const LeadinPluginSidebarWrapper = withSelect((select: Function) => {
     const data = select('core/editor');
     return {

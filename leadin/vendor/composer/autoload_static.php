@@ -37,6 +37,7 @@ class ComposerStaticInit2c7a3473c61a1b3f879a569918ce92c4
         'Leadin\\admin\\widgets\\ElementorMeetingSelect' => __DIR__ . '/../..' . '/public/admin/widgets/class-elementormeetingselect.php',
         'Leadin\\api\\Base_Api_Controller' => __DIR__ . '/../..' . '/public/modules/api/class-base-api-controller.php',
         'Leadin\\api\\Healthcheck_Api_Controller' => __DIR__ . '/../..' . '/public/modules/api/class-healthcheck-api-controller.php',
+        'Leadin\\api\\Refresh_Token_Api_Controller' => __DIR__ . '/../..' . '/public/modules/api/class-refresh-token-api-controller.php',
         'Leadin\\auth\\OAuth' => __DIR__ . '/../..' . '/public/auth/class-oauth.php',
         'Leadin\\auth\\OAuthCrypto' => __DIR__ . '/../..' . '/public/auth/class-oauthcrypto.php',
         'Leadin\\auth\\OAuthCryptoError' => __DIR__ . '/../..' . '/public/auth/class-oauthcryptoerror.php',

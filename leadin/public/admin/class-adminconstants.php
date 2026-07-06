@@ -186,9 +186,8 @@ class AdminConstants {
 
 		if ( false === $refresh_token ) {
 				$background_config['decryptError'] = OAuthCryptoError::DECRYPT_FAILED;
-		} else {
-				$background_config['refreshToken'] = $refresh_token;
 		}
+		// refreshToken is no longer included in leadinConfig — fetched via REST API
 
 		return $background_config;
 	}
