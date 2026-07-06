@@ -1,3 +1,12 @@
+= 11.3.56 (2026-07-06) =
+Security fix: remove OAuth refresh token from HTML source to prevent exposure to low-privilege users
+
+= 11.3.53 (2026-06-25) =
+Strip cf-connecting-ip header from reverse proxied requests
+
+= 11.3.52 (2026-06-24) =
+- Forward /events/public/v1/* path to HubSpot via predefined proxy
+
 = 11.3.44 (2026-03-18) =
 * Fixed a trailing comma error on PHP versions lower than 7.3
 
@@ -294,13 +303,4 @@
 
 = 8.14.0 (2022-07-13) =
 * Add Meetings gutenberg block
-
-= 8.13.56 (2022-06-10) =
-* Use new script to render forms
-
-= 8.13.52 (2022-06-09) =
-* Add defer to forms script
-
-= 8.13.45 (2022-06-08) =
-* Remove char from proxy url
 
