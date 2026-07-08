@@ -27,7 +27,7 @@ import {
   decryptError,
   LeadinConfig,
 } from '../constants/leadinConfig';
-import { fetchRefreshToken } from '../api/wordpressApiClient';
+import { fetchAccessToken } from '../api/wordpressApiClient';
 import { App, AppIframe } from './constants';
 import { messageMiddleware } from './messageMiddleware';
 import { resizeWindow, useIframeNotRendered } from '../utils/iframe';
@@ -188,11 +188,11 @@ export default function useAppEmbedder(
       return;
     }
 
-    const createEmbedder = (refreshToken = '') => {
+    const createEmbedder = (accessToken = '', expiresIn = 0) => {
       const options = getAppOptions(app, createRoute)
         .setLocale(locale)
         .setDeviceId(deviceId)
-        .setRefreshToken(refreshToken)
+        .setAccessToken(accessToken, expiresIn)
         .setLeadinConfig(getLeadinConfig());
 
       const embedder = new IntegratedAppEmbedder(
@@ -200,10 +200,14 @@ export default function useAppEmbedder(
         portalId,
         hubspotBaseUrl,
         resizeWindow,
-        refreshToken ? '' : impactLink
+        accessToken ? '' : impactLink
       ).setOptions(options);
 
-      embedder.subscribe(messageMiddleware(embedder));
+      embedder.subscribe((message: any) => {
+        messageMiddleware(embedder)(message);
+      });
+      embedder.setTokenRenewalCallback(fetchAccessToken);
+
       embedder.attachTo(container, true);
       embedder.postStartAppMessage(); // lets the app know all all data has been passed to it
 
@@ -211,10 +215,18 @@ export default function useAppEmbedder(
     };
 
     if (connectionStatus === 'Connected') {
-      fetchRefreshToken()
-        .then(({ refreshToken }: { refreshToken: string }) => {
-          createEmbedder(refreshToken);
-        })
+      fetchAccessToken()
+        .then(
+          ({
+            accessToken,
+            expiresIn,
+          }: {
+            accessToken: string;
+            expiresIn: number;
+          }) => {
+            createEmbedder(accessToken, expiresIn);
+          }
+        )
         .catch(() => {});
     } else {
       createEmbedder();

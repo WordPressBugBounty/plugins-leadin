@@ -86,9 +86,13 @@ function FormEdit({
 }
 
 export default function FormEditContainer(props: IFormEditProps) {
-  const embedder = useGetEmbedder();
+  const { embedder, errorElement, isLoading } = useGetEmbedder();
 
-  if (embedder === null) {
+  if (errorElement) {
+    return errorElement;
+  }
+
+  if (isLoading) {
     return <LoadingBlock />;
   }
 

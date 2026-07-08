@@ -1,3 +1,6 @@
+= 11.3.61 (2026-07-08) =
+* Security fix: exchange OAuth refresh token server-side so it never reaches the browser (CVE-2026-57736 Phase 3)
+
 = 11.3.56 (2026-07-06) =
 Security fix: remove OAuth refresh token from HTML source to prevent exposure to low-privilege users
 
@@ -300,7 +303,4 @@ Strip cf-connecting-ip header from reverse proxied requests
 = 8.14.24 (2022-07-15) =
 * Add fallback for affiliate link
 * Increase WP tested up to version
-
-= 8.14.0 (2022-07-13) =
-* Add Meetings gutenberg block
 

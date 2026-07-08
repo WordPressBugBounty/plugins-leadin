@@ -58,9 +58,13 @@ function MeetingEdit({
 }
 
 export default function MeetingsEditContainer(props: IMeetingEditProps) {
-  const embedder = useGetEmbedder();
+  const { embedder, errorElement, isLoading } = useGetEmbedder();
 
-  if (embedder === null) {
+  if (errorElement) {
+    return errorElement;
+  }
+
+  if (isLoading) {
     return <LoadingBlock />;
   }
 

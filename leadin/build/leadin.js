@@ -67,6 +67,7 @@ var isPropValid = /* #__PURE__ */(0,_emotion_memoize__WEBPACK_IMPORTED_MODULE_0_
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "disableInternalTracking": () => (/* binding */ disableInternalTracking),
+/* harmony export */   "fetchAccessToken": () => (/* binding */ fetchAccessToken),
 /* harmony export */   "fetchDisableInternalTracking": () => (/* binding */ fetchDisableInternalTracking),
 /* harmony export */   "fetchProxyMappingsEnabled": () => (/* binding */ fetchProxyMappingsEnabled),
 /* harmony export */   "fetchRefreshToken": () => (/* binding */ fetchRefreshToken),
@@ -172,6 +173,39 @@ function fetchRefreshToken() {
     });
   }
   return refreshTokenRequest;
+}
+var ACCESS_TOKEN_CACHE_KEY = 'leadin_access_token';
+var ACCESS_TOKEN_MIN_TTL_SECONDS = 300;
+var accessTokenRequest = null;
+function fetchAccessToken() {
+  try {
+    var cached = sessionStorage.getItem(ACCESS_TOKEN_CACHE_KEY);
+    if (cached) {
+      var _JSON$parse = JSON.parse(cached),
+        accessToken = _JSON$parse.accessToken,
+        expiresAt = _JSON$parse.expiresAt;
+      if (accessToken && expiresAt > Math.floor(Date.now() / 1000) + ACCESS_TOKEN_MIN_TTL_SECONDS) {
+        return Promise.resolve({
+          accessToken: accessToken,
+          expiresIn: expiresAt - Math.floor(Date.now() / 1000)
+        });
+      }
+    }
+  } catch (_) {}
+  if (!accessTokenRequest) {
+    accessTokenRequest = makeRequest('get', '/access-token').then(function (response) {
+      try {
+        sessionStorage.setItem(ACCESS_TOKEN_CACHE_KEY, JSON.stringify({
+          accessToken: response.accessToken,
+          expiresAt: Math.floor(Date.now() / 1000) + response.expiresIn
+        }));
+      } catch (_) {}
+      return response;
+    })["finally"](function () {
+      accessTokenRequest = null;
+    });
+  }
+  return accessTokenRequest;
 }
 
 /***/ }),
@@ -903,18 +937,23 @@ function useAppEmbedder(app, createRoute, container) {
       return;
     }
     var createEmbedder = function createEmbedder() {
-      var refreshToken = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
-      var options = getAppOptions(app, createRoute).setLocale(_constants_leadinConfig__WEBPACK_IMPORTED_MODULE_2__.locale).setDeviceId(_constants_leadinConfig__WEBPACK_IMPORTED_MODULE_2__.deviceId).setRefreshToken(refreshToken).setLeadinConfig(getLeadinConfig());
-      var embedder = new IntegratedAppEmbedder(_constants__WEBPACK_IMPORTED_MODULE_4__.AppIframe[app], _constants_leadinConfig__WEBPACK_IMPORTED_MODULE_2__.portalId, _constants_leadinConfig__WEBPACK_IMPORTED_MODULE_2__.hubspotBaseUrl, _utils_iframe__WEBPACK_IMPORTED_MODULE_6__.resizeWindow, refreshToken ? '' : _constants_leadinConfig__WEBPACK_IMPORTED_MODULE_2__.impactLink).setOptions(options);
-      embedder.subscribe((0,_messageMiddleware__WEBPACK_IMPORTED_MODULE_5__.messageMiddleware)(embedder));
+      var accessToken = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
+      var expiresIn = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+      var options = getAppOptions(app, createRoute).setLocale(_constants_leadinConfig__WEBPACK_IMPORTED_MODULE_2__.locale).setDeviceId(_constants_leadinConfig__WEBPACK_IMPORTED_MODULE_2__.deviceId).setAccessToken(accessToken, expiresIn).setLeadinConfig(getLeadinConfig());
+      var embedder = new IntegratedAppEmbedder(_constants__WEBPACK_IMPORTED_MODULE_4__.AppIframe[app], _constants_leadinConfig__WEBPACK_IMPORTED_MODULE_2__.portalId, _constants_leadinConfig__WEBPACK_IMPORTED_MODULE_2__.hubspotBaseUrl, _utils_iframe__WEBPACK_IMPORTED_MODULE_6__.resizeWindow, accessToken ? '' : _constants_leadinConfig__WEBPACK_IMPORTED_MODULE_2__.impactLink).setOptions(options);
+      embedder.subscribe(function (message) {
+        (0,_messageMiddleware__WEBPACK_IMPORTED_MODULE_5__.messageMiddleware)(embedder)(message);
+      });
+      embedder.setTokenRenewalCallback(_api_wordpressApiClient__WEBPACK_IMPORTED_MODULE_3__.fetchAccessToken);
       embedder.attachTo(container, true);
       embedder.postStartAppMessage(); // lets the app know all all data has been passed to it
       window.embedder = embedder;
     };
     if (_constants_leadinConfig__WEBPACK_IMPORTED_MODULE_2__.connectionStatus === 'Connected') {
-      (0,_api_wordpressApiClient__WEBPACK_IMPORTED_MODULE_3__.fetchRefreshToken)().then(function (_ref) {
-        var refreshToken = _ref.refreshToken;
-        createEmbedder(refreshToken);
+      (0,_api_wordpressApiClient__WEBPACK_IMPORTED_MODULE_3__.fetchAccessToken)().then(function (_ref) {
+        var accessToken = _ref.accessToken,
+          expiresIn = _ref.expiresIn;
+        createEmbedder(accessToken, expiresIn);
       })["catch"](function () {});
     } else {
       createEmbedder();

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import * as WpPluginsLib from '@wordpress/plugins';
 import { PluginSidebar } from '@wordpress/edit-post';
 import { PanelBody, Icon } from '@wordpress/components';
@@ -8,8 +8,10 @@ import SidebarSprocketIcon from '../Common/SidebarSprocketIcon';
 import styled from 'styled-components';
 import { __ } from '@wordpress/i18n';
 import { BackgroudAppContext } from '../../iframe/useBackgroundApp';
+import { getOrCreateBackgroundApp } from '../../utils/backgroundAppUtils';
 import { isFullSiteEditor } from '../../utils/withMetaData';
-import { useGetEmbedder } from '../../utils/useGetEmbedder';
+import { isRefreshTokenAvailable } from '../../utils/isRefreshTokenAvailable';
+import { fetchAccessToken } from '../../api/wordpressApiClient';
 
 export function registerHubspotSidebar() {
   const ContentTypeLabelStyle = styled.div`
@@ -27,7 +29,25 @@ export function registerHubspotSidebar() {
   );
 
   const LeadinPluginSidebar = ({ postType }: { postType: string }) => {
-    const embedder = useGetEmbedder();
+    const [embedder, setEmbedder] = useState<any>(null);
+
+    useEffect(() => {
+      if (isRefreshTokenAvailable()) {
+        fetchAccessToken()
+          .then(
+            ({
+              accessToken,
+              expiresIn,
+            }: {
+              accessToken: string;
+              expiresIn: number;
+            }) => {
+              setEmbedder(getOrCreateBackgroundApp(accessToken, expiresIn));
+            }
+          )
+          .catch(() => {});
+      }
+    }, []);
 
     return postType && !isFullSiteEditor() ? (
       <PluginSidebar

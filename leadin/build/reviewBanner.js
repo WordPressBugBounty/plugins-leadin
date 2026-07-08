@@ -11,6 +11,7 @@
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "disableInternalTracking": () => (/* binding */ disableInternalTracking),
+/* harmony export */   "fetchAccessToken": () => (/* binding */ fetchAccessToken),
 /* harmony export */   "fetchDisableInternalTracking": () => (/* binding */ fetchDisableInternalTracking),
 /* harmony export */   "fetchProxyMappingsEnabled": () => (/* binding */ fetchProxyMappingsEnabled),
 /* harmony export */   "fetchRefreshToken": () => (/* binding */ fetchRefreshToken),
@@ -116,6 +117,39 @@ function fetchRefreshToken() {
     });
   }
   return refreshTokenRequest;
+}
+var ACCESS_TOKEN_CACHE_KEY = 'leadin_access_token';
+var ACCESS_TOKEN_MIN_TTL_SECONDS = 300;
+var accessTokenRequest = null;
+function fetchAccessToken() {
+  try {
+    var cached = sessionStorage.getItem(ACCESS_TOKEN_CACHE_KEY);
+    if (cached) {
+      var _JSON$parse = JSON.parse(cached),
+        accessToken = _JSON$parse.accessToken,
+        expiresAt = _JSON$parse.expiresAt;
+      if (accessToken && expiresAt > Math.floor(Date.now() / 1000) + ACCESS_TOKEN_MIN_TTL_SECONDS) {
+        return Promise.resolve({
+          accessToken: accessToken,
+          expiresIn: expiresAt - Math.floor(Date.now() / 1000)
+        });
+      }
+    }
+  } catch (_) {}
+  if (!accessTokenRequest) {
+    accessTokenRequest = makeRequest('get', '/access-token').then(function (response) {
+      try {
+        sessionStorage.setItem(ACCESS_TOKEN_CACHE_KEY, JSON.stringify({
+          accessToken: response.accessToken,
+          expiresAt: Math.floor(Date.now() / 1000) + response.expiresIn
+        }));
+      } catch (_) {}
+      return response;
+    })["finally"](function () {
+      accessTokenRequest = null;
+    });
+  }
+  return accessTokenRequest;
 }
 
 /***/ }),
@@ -503,6 +537,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _constants_leadinConfig__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../constants/leadinConfig */ "./scripts/constants/leadinConfig.ts");
 /* harmony import */ var _appUtils__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./appUtils */ "./scripts/utils/appUtils.ts");
+/* harmony import */ var _api_wordpressApiClient__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../api/wordpressApiClient */ "./scripts/api/wordpressApiClient.ts");
+
 
 
 function initBackgroundApp(initFn) {
@@ -523,17 +559,19 @@ var getLeadinConfig = function getLeadinConfig() {
   };
 };
 var getOrCreateBackgroundApp = function getOrCreateBackgroundApp() {
-  var refreshToken = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
+  var accessToken = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
+  var expiresIn = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
   if (window.LeadinBackgroundApp) {
     return window.LeadinBackgroundApp;
   }
   var _window = window,
     IntegratedAppEmbedder = _window.IntegratedAppEmbedder,
     IntegratedAppOptions = _window.IntegratedAppOptions;
-  var options = new IntegratedAppOptions().setLocale(_constants_leadinConfig__WEBPACK_IMPORTED_MODULE_0__.locale).setDeviceId(_constants_leadinConfig__WEBPACK_IMPORTED_MODULE_0__.deviceId).setLeadinConfig(getLeadinConfig()).setRefreshToken(refreshToken.trim());
+  var options = new IntegratedAppOptions().setLocale(_constants_leadinConfig__WEBPACK_IMPORTED_MODULE_0__.locale).setDeviceId(_constants_leadinConfig__WEBPACK_IMPORTED_MODULE_0__.deviceId).setLeadinConfig(getLeadinConfig()).setAccessToken(accessToken, expiresIn);
   var embedder = new IntegratedAppEmbedder('integrated-plugin-proxy', _constants_leadinConfig__WEBPACK_IMPORTED_MODULE_0__.portalId, _constants_leadinConfig__WEBPACK_IMPORTED_MODULE_0__.hubspotBaseUrl, function () {}).setOptions(options);
   embedder.attachTo(document.body, false);
-  embedder.postStartAppMessage(); // lets the app know all all data has been passed to it
+  embedder.setTokenRenewalCallback(_api_wordpressApiClient__WEBPACK_IMPORTED_MODULE_2__.fetchAccessToken);
+  embedder.postStartAppMessage(); // lets the app know all data has been passed to it
   window.LeadinBackgroundApp = embedder;
   return window.LeadinBackgroundApp;
 };
@@ -3849,9 +3887,10 @@ var userIsAfterIntroductoryPeriod = function userIsAfterIntroductoryPeriod() {
  */
 function initMonitorReviewBanner() {
   if (_constants_leadinConfig__WEBPACK_IMPORTED_MODULE_3__.connectionStatus !== 'Connected') return;
-  (0,_api_wordpressApiClient__WEBPACK_IMPORTED_MODULE_4__.fetchRefreshToken)().then(function (_ref) {
-    var refreshToken = _ref.refreshToken;
-    var embedder = (0,_utils_backgroundAppUtils__WEBPACK_IMPORTED_MODULE_1__.getOrCreateBackgroundApp)(refreshToken);
+  (0,_api_wordpressApiClient__WEBPACK_IMPORTED_MODULE_4__.fetchAccessToken)().then(function (_ref) {
+    var accessToken = _ref.accessToken,
+      expiresIn = _ref.expiresIn;
+    var embedder = (0,_utils_backgroundAppUtils__WEBPACK_IMPORTED_MODULE_1__.getOrCreateBackgroundApp)(accessToken, expiresIn);
     var container = jquery__WEBPACK_IMPORTED_MODULE_0___default()(_constants_selectors__WEBPACK_IMPORTED_MODULE_2__.domElements.reviewBannerContainer);
     if (container && userIsAfterIntroductoryPeriod()) {
       jquery__WEBPACK_IMPORTED_MODULE_0___default()(_constants_selectors__WEBPACK_IMPORTED_MODULE_2__.domElements.reviewBannerLeaveReviewLink).off('click').on('click', function () {
@@ -3877,6 +3916,8 @@ function initMonitorReviewBanner() {
         }
       });
     }
+  })["catch"](function (err) {
+    return console.error('[leadin] Failed to load review banner embedder:', err);
   });
 }
 (0,_utils_backgroundAppUtils__WEBPACK_IMPORTED_MODULE_1__.initBackgroundApp)(initMonitorReviewBanner);

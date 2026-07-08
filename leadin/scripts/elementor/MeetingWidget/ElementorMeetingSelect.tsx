@@ -111,7 +111,19 @@ function ElementorMeetingSelectWrapper(props: IElementorMeetingSelectProps) {
 export default function ElementorMeetingsSelectContainer(
   props: IElementorMeetingSelectProps
 ) {
-  const embedder = useGetEmbedder();
+  const { embedder, errorElement, isLoading } = useGetEmbedder();
+
+  if (errorElement) {
+    return errorElement;
+  }
+
+  if (isLoading) {
+    return (
+      <div>
+        <UISpinner />
+      </div>
+    );
+  }
 
   return (
     <BackgroudAppContext.Provider value={embedder}>

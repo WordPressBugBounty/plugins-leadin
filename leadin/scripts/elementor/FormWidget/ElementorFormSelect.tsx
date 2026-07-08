@@ -1,8 +1,8 @@
 import React, { Fragment } from 'react';
 import { portalId } from '../../constants/leadinConfig';
+import { __ } from '@wordpress/i18n';
 import ElementorBanner from '../Common/ElementorBanner';
 import UISpinner from '../../shared/UIComponents/UISpinner';
-import { __ } from '@wordpress/i18n';
 import {
   BackgroudAppContext,
   useBackgroundAppContext,
@@ -77,7 +77,19 @@ function ElementorFormSelectWrapper(props: IElementorFormSelectProps) {
 export default function ElementorFormSelectContainer(
   props: IElementorFormSelectProps
 ) {
-  const embedder = useGetEmbedder();
+  const { embedder, errorElement, isLoading } = useGetEmbedder();
+
+  if (errorElement) {
+    return errorElement;
+  }
+
+  if (isLoading) {
+    return (
+      <div>
+        <UISpinner />
+      </div>
+    );
+  }
 
   return (
     <BackgroudAppContext.Provider value={embedder}>
