@@ -1,3 +1,6 @@
+= 11.3.62 (2026-07-09) =
+* Migrate OAuth token exchange to v2 endpoint with token in request body
+
 = 11.3.61 (2026-07-08) =
 * Security fix: exchange OAuth refresh token server-side so it never reaches the browser (CVE-2026-57736 Phase 3)
 
@@ -299,8 +302,4 @@ Strip cf-connecting-ip header from reverse proxied requests
 
 = 8.15.0 (2022-07-15) =
 * Add hubspot sidebar to set content type
-
-= 8.14.24 (2022-07-15) =
-* Add fallback for affiliate link
-* Increase WP tested up to version
 

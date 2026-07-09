@@ -57,12 +57,16 @@ class Access_Token_Api_Controller extends Base_Api_Controller {
 		}
 
 		// Server-side exchange — refresh token never leaves PHP.
-		// The /wordpress/v1/oauth/refresh endpoint takes the token as a query
-		// parameter (consistent with the existing browser-side JS client contract).
-		$api_url  = Filters::apply_base_api_url_filters() . '/wordpress/v1/oauth/refresh';
+		// The /wordpress/v2/oauth/refresh endpoint takes the token in the POST
+		// body so it does not appear in server access logs.
+		$api_url  = Filters::apply_base_api_url_filters() . '/wordpress/v2/oauth/refresh';
 		$response = wp_remote_post(
-			$api_url . '?refresh_token=' . rawurlencode( $refresh_token ),
-			array( 'timeout' => 15 )
+			$api_url,
+			array(
+				'headers' => array( 'Content-Type' => 'application/json' ),
+				'body'    => json_encode( array( 'refreshToken' => $refresh_token ) ),
+				'timeout' => 15,
+			)
 		);
 
 		if ( is_wp_error( $response ) ) {
@@ -104,7 +108,7 @@ class Access_Token_Api_Controller extends Base_Api_Controller {
 				array(
 					'accessToken' => $body['access_token'],
 					'expiresAt'   => time() + $expires_in,
-				)
+			)
 			);
 			set_transient( self::CACHE_KEY, $cache_data, $expires_in - 300 );
 		}
