@@ -70,7 +70,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "fetchAccessToken": () => (/* binding */ fetchAccessToken),
 /* harmony export */   "fetchDisableInternalTracking": () => (/* binding */ fetchDisableInternalTracking),
 /* harmony export */   "fetchProxyMappingsEnabled": () => (/* binding */ fetchProxyMappingsEnabled),
-/* harmony export */   "fetchRefreshToken": () => (/* binding */ fetchRefreshToken),
 /* harmony export */   "getBusinessUnitId": () => (/* binding */ getBusinessUnitId),
 /* harmony export */   "healthcheckRestApi": () => (/* binding */ healthcheckRestApi),
 /* harmony export */   "refreshProxyMappingsCache": () => (/* binding */ refreshProxyMappingsCache),
@@ -163,16 +162,6 @@ function fetchProxyMappingsEnabled() {
 }
 function toggleProxyMappingsEnabled(value) {
   return makeRequest('put', '/wp-mappings-proxy-enabled', value);
-}
-var refreshTokenRequest = null;
-function fetchRefreshToken() {
-  if (!refreshTokenRequest) {
-    refreshTokenRequest = makeRequest('get', '/refresh-token')["catch"](function (err) {
-      refreshTokenRequest = null;
-      throw err;
-    });
-  }
-  return refreshTokenRequest;
 }
 var ACCESS_TOKEN_CACHE_KEY = 'leadin_access_token';
 var ACCESS_TOKEN_MIN_TTL_SECONDS = 300;

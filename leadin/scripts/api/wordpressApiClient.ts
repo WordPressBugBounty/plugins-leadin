@@ -93,18 +93,6 @@ export function toggleProxyMappingsEnabled(value: boolean) {
   return makeRequest('put', '/wp-mappings-proxy-enabled', value);
 }
 
-let refreshTokenRequest: Promise<any> | null = null;
-
-export function fetchRefreshToken() {
-  if (!refreshTokenRequest) {
-    refreshTokenRequest = makeRequest('get', '/refresh-token').catch(err => {
-      refreshTokenRequest = null;
-      throw err;
-    });
-  }
-  return refreshTokenRequest;
-}
-
 const ACCESS_TOKEN_CACHE_KEY = 'leadin_access_token';
 const ACCESS_TOKEN_MIN_TTL_SECONDS = 300;
 

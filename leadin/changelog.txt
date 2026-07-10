@@ -1,3 +1,6 @@
+= 11.3.64 (2026-07-10) =
+Remove deprecated /leadin/v1/refresh-token endpoint
+
 = 11.3.62 (2026-07-09) =
 * Migrate OAuth token exchange to v2 endpoint with token in request body
 
@@ -299,7 +302,4 @@ Strip cf-connecting-ip header from reverse proxied requests
 
 = 8.15.36 (2022-07-19) =
 * Add validation for content type in meta data
-
-= 8.15.0 (2022-07-15) =
-* Add hubspot sidebar to set content type
 

@@ -37,7 +37,6 @@ return array(
     'Leadin\\api\\Access_Token_Api_Controller' => $baseDir . '/public/modules/api/class-access-token-api-controller.php',
     'Leadin\\api\\Base_Api_Controller' => $baseDir . '/public/modules/api/class-base-api-controller.php',
     'Leadin\\api\\Healthcheck_Api_Controller' => $baseDir . '/public/modules/api/class-healthcheck-api-controller.php',
-    'Leadin\\api\\Refresh_Token_Api_Controller' => $baseDir . '/public/modules/api/class-refresh-token-api-controller.php',
     'Leadin\\auth\\OAuth' => $baseDir . '/public/auth/class-oauth.php',
     'Leadin\\auth\\OAuthCrypto' => $baseDir . '/public/auth/class-oauthcrypto.php',
     'Leadin\\auth\\OAuthCryptoError' => $baseDir . '/public/auth/class-oauthcryptoerror.php',
