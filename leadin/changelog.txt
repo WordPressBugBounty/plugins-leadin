@@ -1,3 +1,6 @@
+= 11.3.69 (2026-07-30) =
+* Fix tracking code script tag ID and async attribute not applied on WordPress 5.7+
+
 = 11.3.64 (2026-07-10) =
 Remove deprecated /leadin/v1/refresh-token endpoint
 
@@ -299,7 +302,4 @@ Strip cf-connecting-ip header from reverse proxied requests
 
 = 8.15.65 (2022-07-22) =
 * Fix encode URL for affiliate link
-
-= 8.15.36 (2022-07-19) =
-* Add validation for content type in meta data
 

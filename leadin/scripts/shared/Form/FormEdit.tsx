@@ -1,4 +1,4 @@
-import React, { Fragment, useEffect } from 'react';
+import { Fragment, useEffect } from 'react';
 import { portalId } from '../../constants/leadinConfig';
 import UISpacer from '../UIComponents/UISpacer';
 import PreviewForm from './PreviewForm';
@@ -6,12 +6,11 @@ import FormSelect from './FormSelect';
 import { IFormBlockProps } from '../../gutenberg/FormBlock/registerFormBlock';
 import {
   usePostBackgroundMessage,
-  BackgroudAppContext,
   useBackgroundAppContext,
 } from '../../iframe/useBackgroundApp';
 import { ProxyMessages } from '../../iframe/integratedMessages';
 import LoadingBlock from '../Common/LoadingBlock';
-import { useGetEmbedder } from '../../utils/useGetEmbedder';
+import EmbedderContainer from '../Common/EmbedderContainer';
 
 interface IFormEditProps extends IFormBlockProps {
   preview: boolean;
@@ -86,19 +85,9 @@ function FormEdit({
 }
 
 export default function FormEditContainer(props: IFormEditProps) {
-  const { embedder, errorElement, isLoading } = useGetEmbedder();
-
-  if (errorElement) {
-    return errorElement;
-  }
-
-  if (isLoading) {
-    return <LoadingBlock />;
-  }
-
   return (
-    <BackgroudAppContext.Provider value={embedder}>
+    <EmbedderContainer>
       <FormEdit {...props} />
-    </BackgroudAppContext.Provider>
+    </EmbedderContainer>
   );
 }

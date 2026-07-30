@@ -1,15 +1,14 @@
-import React, { Fragment, useEffect } from 'react';
+import { Fragment, useEffect } from 'react';
 import { IMeetingBlockProps } from '../../gutenberg/MeetingsBlock/registerMeetingBlock';
 import MeetingController from './MeetingController';
 import PreviewMeeting from './PreviewMeeting';
 import {
-  BackgroudAppContext,
   useBackgroundAppContext,
   usePostBackgroundMessage,
 } from '../../iframe/useBackgroundApp';
 import { ProxyMessages } from '../../iframe/integratedMessages';
 import LoadingBlock from '../Common/LoadingBlock';
-import { useGetEmbedder } from '../../utils/useGetEmbedder';
+import EmbedderContainer from '../Common/EmbedderContainer';
 
 interface IMeetingEditProps extends IMeetingBlockProps {
   preview?: boolean;
@@ -58,19 +57,9 @@ function MeetingEdit({
 }
 
 export default function MeetingsEditContainer(props: IMeetingEditProps) {
-  const { embedder, errorElement, isLoading } = useGetEmbedder();
-
-  if (errorElement) {
-    return errorElement;
-  }
-
-  if (isLoading) {
-    return <LoadingBlock />;
-  }
-
   return (
-    <BackgroudAppContext.Provider value={embedder}>
+    <EmbedderContainer>
       <MeetingEdit {...props} />
-    </BackgroudAppContext.Provider>
+    </EmbedderContainer>
   );
 }

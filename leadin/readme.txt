@@ -6,7 +6,7 @@ Tags: CRM, Marketing, Live Chat, Forms, Analytics
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.2
-Stable tag: 11.3.65
+Stable tag: 11.3.69
 
 The CRM, Sales, and Marketing WordPress plugin to grow your business better.
 
@@ -395,12 +395,12 @@ Please visit the <a href="https://community.hubspot.com/?utm_source=wordpress-pl
 == Changelog ==
 
 <a href="http://plugins.svn.wordpress.org/leadin/trunk/changelog.txt" target="_blank">Full changelog here</a>
-- Current version: 11.3.65
-- Version release date: 2026-07-10
+- Current version: 11.3.69
+- Version release date: 2026-07-30
+
+= 11.3.69 (2026-07-30) =
+* Fix tracking code script tag ID and async attribute not applied on WordPress 5.7+
 
 = 11.3.64 (2026-07-10) =
 Remove deprecated /leadin/v1/refresh-token endpoint
-
-= 11.3.62 (2026-07-09) =
-* Migrate OAuth token exchange to v2 endpoint with token in request body
 

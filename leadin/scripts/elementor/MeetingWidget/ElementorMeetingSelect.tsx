@@ -1,4 +1,4 @@
-import React, { Fragment, useState } from 'react';
+import { Fragment, useState } from 'react';
 import ElementorBanner from '../Common/ElementorBanner';
 import UISpinner from '../../shared/UIComponents/UISpinner';
 import ElementorMeetingWarning from './ElementorMeetingWarning';
@@ -7,11 +7,7 @@ import useMeetings, {
 } from '../../shared/Meeting/hooks/useMeetings';
 import { __ } from '@wordpress/i18n';
 import Raven from 'raven-js';
-import {
-  BackgroudAppContext,
-  useBackgroundAppContext,
-} from '../../iframe/useBackgroundApp';
-import { useGetEmbedder } from '../../utils/useGetEmbedder';
+import EmbedderContainer from '../../shared/Common/EmbedderContainer';
 
 interface IElementorMeetingSelectProps {
   url: string;
@@ -92,42 +88,12 @@ function ElementorMeetingSelect({
   );
 }
 
-function ElementorMeetingSelectWrapper(props: IElementorMeetingSelectProps) {
-  const isBackgroundAppReady = useBackgroundAppContext();
-
-  return (
-    <Fragment>
-      {!isBackgroundAppReady ? (
-        <div>
-          <UISpinner />
-        </div>
-      ) : (
-        <ElementorMeetingSelect {...props} />
-      )}
-    </Fragment>
-  );
-}
-
 export default function ElementorMeetingsSelectContainer(
   props: IElementorMeetingSelectProps
 ) {
-  const { embedder, errorElement, isLoading } = useGetEmbedder();
-
-  if (errorElement) {
-    return errorElement;
-  }
-
-  if (isLoading) {
-    return (
-      <div>
-        <UISpinner />
-      </div>
-    );
-  }
-
   return (
-    <BackgroudAppContext.Provider value={embedder}>
-      <ElementorMeetingSelectWrapper {...props} />
-    </BackgroudAppContext.Provider>
+    <EmbedderContainer>
+      <ElementorMeetingSelect {...props} />
+    </EmbedderContainer>
   );
 }
