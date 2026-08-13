@@ -1,3 +1,7 @@
+= 11.3.70 (2026-08-12) =
+* Fix reverse proxy returning a 500 "Error retrieving content" error in browsers by not forwarding the client Accept-Encoding header, which caused Brotli responses WordPress cannot decode
+* Fix reverse proxy collapsing multiple Set-Cookie response headers into the literal "Set-Cookie: Array"
+
 = 11.3.69 (2026-07-30) =
 * Fix tracking code script tag ID and async attribute not applied on WordPress 5.7+
 
@@ -299,7 +303,4 @@ Strip cf-connecting-ip header from reverse proxied requests
 
 = 8.15.139 (2022-08-04) =
 * Fix for content type customization
-
-= 8.15.65 (2022-07-22) =
-* Fix encode URL for affiliate link
 
